@@ -1,0 +1,19 @@
+{
+  "name": "fde-json-loader",
+  "version": "1.0.0",
+  "description": "Dynamically load JSON entity folders into PostgreSQL for the FDE graph-based data system.",
+  "main": "load_data.js",
+  "scripts": {
+    "load": "node load_data.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "lodash": "^4.17.23",
+    "lucide-react": "^1.6.0",
+    "pg": "^8.13.3",
+    "react-force-graph-2d": "^1.29.1"
+  },
+  "license": "MIT"
+}
