@@ -53,3 +53,74 @@ Current schema supports deep tracing across:
 - **Sales**: Orders, Items, Customer Profiles.
 - **Logistics**: Deliveries, Shipping Plants, Picking statuses.
 - **Finance**: Billing Documents, Accounting Records, Payment status.
+
+---
+
+## 🚀 Setup & Local Development
+
+Follow these steps to run the FDE Graph Explorer on your local machine.
+
+### 📋 Prerequisites
+- **Node.js** (v18 or higher)
+- **PostgreSQL** (Local installation or a remote instance like Render/RDS)
+- **API Key**: An [OpenRouter](https://openrouter.ai/) API key for the AI-powered query engine.
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Santhu42/Graph-Based-Data-Modeling-and-Query-System.git
+cd Graph-Based-Data-Modeling-and-Query-System
+```
+
+### 2. Configure Environment Variables
+Create a `.env` file in the `backend/` directory:
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/fde_db
+OPENROUTER_API_KEY=your_key_here
+PORT=3000
+```
+
+For the frontend, create `.env.local` in the `frontend/` directory (if you want to target a custom API URL):
+
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+### 3. Install Dependencies
+Run this in the root, then in both sub-directories:
+
+```bash
+# In the root
+npm install
+
+# In the backend
+cd backend && npm install
+
+# In the frontend
+cd ../frontend && npm install
+```
+
+### 4. Seed the Database
+Ensure your PostgreSQL instance is running. Then, run the data loader from the root:
+
+```bash
+# Use current .env if you've configured it at the root 
+# Or pass the DB URL directly in your terminal
+npm run load
+```
+
+### 5. Start the Services
+
+**Run the Backend (API)**:
+```bash
+cd backend
+npm run dev
+```
+
+**Run the Frontend (UI)**:
+```bash
+cd frontend
+npm run dev
+```
+
+The application will be available at [http://localhost:5173/](http://localhost:5173/).
