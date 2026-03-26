@@ -10,7 +10,8 @@ const NodeInspector = ({ node, onClose }) => {
     const fetchDetails = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/node/${node.id}`);
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+        const res = await fetch(`${baseUrl}/api/node/${node.id}`);
         const data = await res.json();
         setDetails(data);
       } catch (err) {

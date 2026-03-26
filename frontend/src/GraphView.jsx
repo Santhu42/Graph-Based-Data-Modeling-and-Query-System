@@ -10,11 +10,12 @@ const GraphView = ({ onNodeClick, initialNodeId }) => {
   const fetchGraph = useCallback(async (nodeId, nodeType = '', depth = 1) => {
     setLoading(true);
     try {
-      const url = nodeId 
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      const endpoint = nodeId 
         ? `/api/graph?nodeId=${nodeId}&nodeType=${nodeType}&depth=${depth}`
         : `/api/graph?depth=1`;
       
-      const res = await fetch(url);
+      const res = await fetch(`${baseUrl}${endpoint}`);
       const data = await res.json();
       
       if (data.error) {
