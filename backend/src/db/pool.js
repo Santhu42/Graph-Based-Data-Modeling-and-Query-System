@@ -20,20 +20,35 @@ const config = process.env.DATABASE_URL
       connectionTimeoutMillis: 5_000,
     };
 
-// Render and most managed databases require SSL
-if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
-  config.ssl = { rejectUnauthorized: false };
+// Only enable SSL for non-localhost DATABASE_URLs (mostly for external DBs), configurable via an override.
+if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost')) {
+  // If the user explicitly sets DB_SSL=false, don't use SSL
+  if (process.env.DB_SSL !== 'false') {
+    config.ssl = { rejectUnauthorized: false };
+  }
 }
 
 const pool = new Pool(config);
-// Crash early if the DB is unreachable
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('[db] ✘ Connection failed:', err.message);
-    process.exit(1);
-  }
-  release();
-  console.log('[db] ✔ PostgreSQL connected');
-});
+
+const connectWithRetry = (retries = 5, delay = 5000) => {
+  pool.connect((err, client, release) => {
+    if (err) {
+      console.error(`[db] ✘ Connection failed (${retries} retries left).`);
+      console.error('[db] Error details:', err.message || err);
+      console.error('[db] Is DATABASE_URL set?', !!process.env.DATABASE_URL);
+      
+      if (retries === 0) {
+        console.error('[db] ✘ Giving up. Please check your DB credentials/URL.');
+        process.exit(1);
+      }
+      setTimeout(() => connectWithRetry(retries - 1, delay), delay);
+      return;
+    }
+    release();
+    console.log('[db] ✔ PostgreSQL connected successfully!');
+  });
+};
+
+connectWithRetry();
 
 module.exports = pool;
