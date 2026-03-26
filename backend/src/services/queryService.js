@@ -34,6 +34,20 @@ const INTENT_RULES = [
     },
   },
   {
+    match: ['high', 'plant'],
+    buildSql() {
+      return {
+        description: 'Plant with highest sales order volume',
+        sql: `SELECT p."plant", p."plantName", COUNT(DISTINCT soi."salesOrder") AS "orderCount"
+              FROM plants p
+              JOIN sales_order_items soi ON soi."productionPlant" = p."plant"
+              GROUP BY p."plant", p."plantName"
+              ORDER BY "orderCount" DESC LIMIT 1`,
+        params: [],
+      };
+    },
+  },
+  {
     match: ['deliver', 'order'],
     buildSql(tokens) {
       const orderId = extractId(tokens);
@@ -377,6 +391,9 @@ async function runWithKeywordRules(rawQuery, history = []) {
       answer = `The highest value order is ${r.salesOrder} for ${r.totalNetAmount} ${r.transactionCurrency}, placed by ${r.businessPartnerFullName} on ${new Date(r.creationDate).toLocaleDateString()}.`;
     } else if (description.includes("All customers")) {
       answer = `I found ${rows.length} customers.`;
+    } else if (description.includes("highest sales order volume")) {
+      const r = rows[0];
+      answer = `The plant with the highest volume is ${r.plantName} (${r.plant}) with ${r.orderCount} orders.`;
     }
   }
 

@@ -4,7 +4,7 @@ import { Send, Bot, User } from 'lucide-react';
 const ChatView = ({ onQuerySuccess }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
-    { role: 'ai', text: 'Hello! I can help you explore order data. Try asking "Show all orders" or "Who are our top customers?"' }
+    { role: 'ai', text: 'Hello! I can help you explore order data. Try asking "Who are our top customers?" or "highest value order".' }
   ]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef();
