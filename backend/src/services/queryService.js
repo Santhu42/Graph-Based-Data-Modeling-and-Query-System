@@ -338,7 +338,7 @@ async function runWithKeywordRules(rawQuery, history = []) {
     return {
       query:       rawQuery,
       interpreted: 'No matching intent found.',
-      answer:      'I could not understand that request. Try: "show all orders", "top customers", or "all plants".',
+      answer:      'This system is designed to answer questions related to the provided dataset only. Try: "show all orders", "top customers", or "all plants".',
       engine:      'keyword-rules',
       hint:        'Try: "orders for customer 310000108", "deliveries for order 740506", "open orders", "all plants".',
       data:        [],
@@ -403,6 +403,35 @@ async function runWithKeywordRules(rawQuery, history = []) {
 // ─── Main entry point ─────────────────────────────────────────────────────────
 
 /**
+ * Fast local check: returns true if the query is obviously off-topic.
+ * Catches general knowledge, creative writing, personal questions, etc.
+ * without burning an LLM API call.
+ */
+const OFF_TOPIC_PATTERNS = [
+  // General knowledge about people
+  /who\s+is\b/i,
+  /what\s+is\s+(a|an|the)?\s*[a-z]+\s*\?/i,
+  /tell\s+me\s+about/i,
+  /explain\s+(me\s+)?(what|how|why)/i,
+  // Creative / general tasks
+  /write\s+(a|an|me)?\s*(poem|story|essay|email|letter|code|song|joke)/i,
+  /generate\s+(a|an)?\s*(poem|story|essay|image|picture)/i,
+  /translate\s+(this|the|to)/i,
+  /summarize\s+this/i,
+  // Off-domain topics
+  /\b(weather|news|sports|stock|crypto|bitcoin|movie|film|music|recipe|food|health|medicine|doctor|covid|election|politic|history|science|math|physics|chemistry|capital\s+of|president\s+of|prime\s+minister)\b/i,
+  // Personal / philosophical
+  /what\s+(should|can|do)\s+i/i,
+  /how\s+to\s+(lose|gain|improve|cook|make|bake|fix\s+my)/i,
+  // Famous people not in dataset
+  /\b(elon\s*musk|einstein|tesla|gandhi|trump|modi|obama|newton|darwin|shakespeare|napoleon|hitler|mahatma)\b/i,
+];
+
+function isObviouslyOffTopic(query) {
+  return OFF_TOPIC_PATTERNS.some(re => re.test(query));
+}
+
+/**
  * Process a natural-language query.
  *
  * @param {string} rawQuery
@@ -412,17 +441,28 @@ async function runWithKeywordRules(rawQuery, history = []) {
 async function processNaturalLanguageQuery(rawQuery, history = []) {
   const hasLlmKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY;
 
+  // ─── Fast local off-topic check (no LLM call needed) ─────────────────────
+  if (isObviouslyOffTopic(rawQuery)) {
+    return {
+      query:    rawQuery,
+      answer:   'This system is designed to answer questions related to the provided dataset only.',
+      engine:   'local-classifier',
+      data:     [],
+      rowCount: 0,
+    };
+  }
+
   if (hasLlmKey) {
-    // ─── Classification check ─────────────────────────────────────────────
+    // ─── LLM classification check ─────────────────────────────────────────
     try {
       const isRelated = await isDatasetQuery(rawQuery);
       if (!isRelated) {
         return {
-          query: rawQuery,
-          answer: "This system is designed to answer dataset-related queries only.",
-          engine: "llm-classifier",
-          data: [],
-          rowCount: 0
+          query:    rawQuery,
+          answer:   'This system is designed to answer questions related to the provided dataset only.',
+          engine:   'llm-classifier',
+          data:     [],
+          rowCount: 0,
         };
       }
     } catch (err) {
