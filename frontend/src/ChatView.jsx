@@ -28,7 +28,7 @@ const ChatView = ({ onQuerySuccess }) => {
       // Send the current message history for context (last 5 turns)
       const history = messages.map(m => ({ role: m.role, text: m.text })).slice(-5);
       
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
       const res = await fetch(`${baseUrl}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
