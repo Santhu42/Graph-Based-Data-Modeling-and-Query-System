@@ -19,9 +19,9 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/graph', graphRouter);
-app.use('/node',  nodeRouter);
-app.use('/query', queryRouter);
+app.use('/api/graph', graphRouter);
+app.use('/api/node',  nodeRouter);
+app.use('/api/query', queryRouter);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date() }));
