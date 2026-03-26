@@ -54,17 +54,17 @@ ALTER TABLE billing_document_items
 ALTER TABLE billing_document_cancellations
   ADD PRIMARY KEY ("billingDocument");
 
--- product_descriptions  →  PK: (material, language)
+-- product_descriptions  →  PK: (product, language)
 ALTER TABLE product_descriptions
-  ADD PRIMARY KEY ("material", "language");
+  ADD PRIMARY KEY ("product", "language");
 
--- product_plants  →  PK: (material, plant)
+-- product_plants  →  PK: (product, plant)
 ALTER TABLE product_plants
-  ADD PRIMARY KEY ("material", "plant");
+  ADD PRIMARY KEY ("product", "plant");
 
--- product_storage_locations  →  PK: (material, plant, storageLocation)
+-- product_storage_locations  →  PK: (product, plant, storageLocation)
 ALTER TABLE product_storage_locations
-  ADD PRIMARY KEY ("material", "plant", "storageLocation");
+  ADD PRIMARY KEY ("product", "plant", "storageLocation");
 
 -- customer_company_assignments  →  PK: (customer, companyCode)
 ALTER TABLE customer_company_assignments
@@ -82,9 +82,10 @@ ALTER TABLE business_partner_addresses
 ALTER TABLE journal_entry_items_accounts_receivable
   ADD PRIMARY KEY ("accountingDocument", "companyCode", "fiscalYear", "accountingDocumentItem");
 
--- payments_accounts_receivable  →  PK: (paymentDocument, companyCode, fiscalYear)
+-- payments_accounts_receivable  →  PK: (accountingDocument, companyCode, fiscalYear, accountingDocumentItem)
 ALTER TABLE payments_accounts_receivable
-  ADD PRIMARY KEY ("paymentDocument", "companyCode", "fiscalYear");
+  ADD PRIMARY KEY ("accountingDocument", "companyCode", "fiscalYear", "accountingDocumentItem");
+
 
 
 -- =============================================================================
@@ -308,7 +309,7 @@ CREATE INDEX IF NOT EXISTS idx_odi_ref_sd_document       ON outbound_delivery_it
 
 -- ── Billing Document Headers ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_bdh_creation_date         ON billing_document_headers ("creationDate");
-CREATE INDEX IF NOT EXISTS idx_bdh_payer_party           ON billing_document_headers ("payerParty");
+CREATE INDEX IF NOT EXISTS idx_bdh_sold_to_party         ON billing_document_headers ("soldToParty");
 
 -- ── Billing Document Items ────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_bdi_material              ON billing_document_items ("material");
@@ -321,8 +322,12 @@ CREATE INDEX IF NOT EXISTS idx_bp_grouping               ON business_partners ("
 CREATE INDEX IF NOT EXISTS idx_plants_sales_org          ON plants ("salesOrganization");
 
 -- ── Product Plants ────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_pp_material               ON product_plants ("material");
-CREATE INDEX IF NOT EXISTS idx_pp_plant                  ON product_plants ("plant");
+CREATE INDEX IF NOT EXISTS idx_pp_product               ON product_plants ("product");
+CREATE INDEX IF NOT EXISTS idx_pp_plant                 ON product_plants ("plant");
+
+-- ── Product Storage Locations ────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_psl_product               ON product_storage_locations ("product");
+CREATE INDEX IF NOT EXISTS idx_psl_plant                 ON product_storage_locations ("plant");
 
 -- ── Journal / Payments ────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_jei_customer              ON journal_entry_items_accounts_receivable ("customer");

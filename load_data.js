@@ -21,13 +21,18 @@ const DATA_ROOT = process.env.DATA_ROOT || path.join(__dirname, 'data');
 /** Insert chunk size – tweak for performance vs memory */
 const BATCH_SIZE = Number(process.env.BATCH_SIZE) || 500;
 
-const DB_CONFIG = {
-  host:     'localhost',
-  port:     5432,
-  database: 'fde_db',
-  user:     'postgres',
-  password: 'admin123',
-};
+const DB_CONFIG = process.env.DATABASE_URL 
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    }
+  : {
+      host:     process.env.DB_HOST     || 'localhost',
+      port:     Number(process.env.DB_PORT) || 5432,
+      database: process.env.DB_NAME     || 'fde_db',
+      user:     process.env.DB_USER     || 'postgres',
+      password: process.env.DB_PASSWORD || 'admin123',
+    };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -181,7 +186,11 @@ async function main() {
   }
 
   // Connect
-  console.log(`Connecting to PostgreSQL at ${DB_CONFIG.host}:${DB_CONFIG.port}/${DB_CONFIG.database} …`);
+  if (process.env.DATABASE_URL) {
+    console.log(`Connecting to PostgreSQL via DATABASE_URL …`);
+  } else {
+    console.log(`Connecting to PostgreSQL at ${DB_CONFIG.host}:${DB_CONFIG.port}/${DB_CONFIG.database} …`);
+  }
   const pool = new Pool(DB_CONFIG);
   await pool.query('SELECT 1'); // connectivity check
   console.log('Connection OK.\n');
