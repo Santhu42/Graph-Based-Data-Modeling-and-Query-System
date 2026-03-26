@@ -235,7 +235,9 @@ const INTENT_RULES = [
 ];
 
 function extractId(tokens) {
-  return tokens.find(t => /^[\dA-Z]{4,}$/i.test(t)) || null;
+  // Most IDs in SAP are numeric (e.g., 310000108, 740506).
+  // This avoids matching common words like 'highest' as IDs.
+  return tokens.find(t => /^\d{3,}$/.test(t)) || null;
 }
 
 function tokenise(text) {
@@ -351,7 +353,7 @@ async function runWithKeywordRules(rawQuery, history = []) {
 
   // ─── Generate human answer (if LLM key available) ──────────────────────
   let answer = description; // fallback to rule description
-  const hasLlmKey = process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY;
+  const hasLlmKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY;
   if (hasLlmKey) {
     try {
       const aiAnswer = await generateAnswer(rawQuery, rows, history);
