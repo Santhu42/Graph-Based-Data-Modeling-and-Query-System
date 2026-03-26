@@ -1,50 +1,55 @@
 # FDE Graph Explorer 🚀
 
-An AI-powered graph visualization and query system for exploring complex relational business data (Orders, Deliveries, Billing, and Journal Entries).
+An AI-powered graph visualization and query system for exploring complex relational business data (Orders, Deliveries, Billing, and Journal Entries). This platform bridges the gap between traditional SQL databases and intuitive graph-based exploration.
 
-## 🏛 Architecture Decisions
+## 🌐 Live Application
+- **Frontend (UI):** [https://fde-frontend.onrender.com/](https://fde-frontend.onrender.com/)
+- **Backend (API):** [https://fde-backend.onrender.com/api/graph](https://fde-backend.onrender.com/api/graph)
+
+## 🏗 Architecture Overview
+
+The system uses a tiered architecture to ensure accuracy, safety, and performance when querying relational data with natural language.
+
+```mermaid
+graph TD
+    A[Frontend: React/Vite/Force-Graph] -- Natural Language Query --> B[Backend: Node.js/Express]
+    B -- 1. Local Guardrail (Regex) --> C{Off-topic?}
+    C -- YES --> D[Rejection Message]
+    C -- NO --> E[2. LLM Classifier]
+    E -- Off-topic --> D
+    E -- On-topic --> F[3. SQL Generator (Gemini/Groq)]
+    F -- Raw SQL --> G[4. SQL Safety Bridge]
+    G -- Safe SELECT --> H[(PostgreSQL: Render)]
+    H -- JSON Data --> I[5. Answer Generator (AI Summary)]
+    I -- Human Response + Highlights --> A
+    A -- Interactive Node Selection --> J[Graph Expansion]
+```
+
+## 🏟 Key Capabilities
 
 ### 1. Hybrid Query Engine (LLM + Keyword Rules)
-- **Problem**: LLMs can hit rate limits (429) or generate hallucinations in complex business logic.
-- **Solution**: A tiered execution flow.
-  1. **Primary**: LLM (OpenRouter/Gemini 2.0) translates natural language to SQL.
-  2. **Secondary**: If the query is simple or the AI is rate-limited, a high-performance **Keyword Rule engine** provides deterministic fallbacks for common entities like "Top Customers" or "All Orders."
-  3. **Summarization**: Results are passed back to the LLM for a human-readable summary, using conversation history for context.
+- **Primary Path**: High-precision SQL generation using Gemini 2.0 and Groq to translate complex business questions into efficient PostgreSQL queries.
+- **Deterministic Fallback**: A library of structured keyword rules handles high-frequency queries (e.g., *"Show latest orders"*) with zero latency, even if the AI is rate-limited.
+- **Narrative Summarization**: Every data result is summarized into a natural human response, highlighting key insights like top customers or high-value orders.
 
-### 2. Force-Directed Graph Visualization
-- Uses `react-force-graph-2d` to represent business relationships as an interactive web.
-- Nodes represent entities (Business Partners, Orders) and edges represent business links (Sold-to, Billed-to).
-- Optimized for performance with dynamic node loading.
+### 2. Relational-to-Graph Virtualization
+- **Graph Transformation Layer**: The platform maps a standard SQL relational schema (PK/FK) into a dynamic graph structure at runtime.
+- **Force-Directed Viz**: Uses D3-powered force simulation to visualize business flows (Sales Order ➔ Delivery ➔ Billing) as connected nodes.
+- **On-Demand Expansion**: Clicking a node fetches its neighbor's data from the relevant tables, allowing users to "crawl" through the business supply chain.
 
-## 🗄 Database Choice: PostgreSQL
-- **Rationale**: While the visualization is a graph, the underlying data (SAP-style business objects) is inherently relational. 
-- **Graph Transformation**: We transform the relational schema into a graph structure at the API layer, allowing us to maintain ACID compliance and perform complex joins efficiently while presenting a connected-data experience to the user.
-
-## 🧠 LLM Prompting & Truncation Strategy
-
-### 1. Optimized Schema Passing
-- Instead of sending the full raw schema (which consumes tokens and causes 429 errors), we send a **compacted domain schema** containing only the critical fields for joins (Sales Order ➔ Delivery ➔ Billing ➔ Journal Entry).
-
-### 2. Smart Data Truncation
-- **Input Control**: If a database result is too large (e.g., "show all 50,000 orders"), the system truncates the JSON data before sending it to the LLM for summarization. 
-- **Context Preservation**: We send a representative sample (top 15 records) and a summary count, preventing token overflow while still providing accurate high-level insights.
-
-### 3. Precision SQL Generation
-- Prompts include specific rules for **Double Quoting** (PostgreSQL case-sensitivity) and instruction to never fabricate filter values unless explicitly mentioned by the user.
-
-## 🛡 Guardrails & Security
-
-### 1. Two-Layer Classification
-- Every query passes through an **LLM Classifier** first.
-- If the question is off-topic (e.g., "Write a poem" or "Who won the World Cup?"), the system rejects it with:
-  > *"This system is designed to answer questions related to the provided dataset only."*
-
-### 2. SQL Safety Filter
-- A programmatic bridge (`sqlSafety.js`) scans the AI-generated SQL before execution.
-- **Blocklist**: Only `SELECT` statements are allowed. `UPDATE`, `DELETE`, `DROP`, and `TRUNCATE` are blocked at the code level.
-- **Auto-Limit**: Every query is automatically appended with a `LIMIT 200` to prevent database memory exhaustion from unbounded selects.
+### 🧠 Domain Guardrails & Safety
+- **Strict Domain Locking**: Unlike generic AI, this system flatly rejects unrelated queries. Questions like *"Who is Einstein?"* or *"Write a poem"* are caught by both regex and LLM-based classifiers.
+- **Read-Only execution**: A mandatory safety bridge (`sqlSafety.js`) validates all AI-generated SQL to ensure it only performs `SELECT` operations and enforces row limits to prevent database strain.
 
 ## 🛠 Tech Stack
-- **Frontend**: Vite, React, Tailwind CSS, React Force Graph.
-- **Backend**: Node.js, Express, PostgreSQL.
-- **AI**: OpenRouter (Gemini 2.0 Flash), Gemini Native, Groq (Llama 3.3).
+- **UI**: React 18, Vite, Tailwind CSS, Lucide Icons, `react-force-graph-2d`.
+- **Backend**: Node.js, Express, `pg` (node-postgres).
+- **Database**: PostgreSQL (Render.com) with relational-graph linkage.
+- **AI Integration**: OpenRouter (Unified API for Gemini and Llama 3 models).
+- **Hosting**: Render.com (Auto-deploy via GitHub).
+
+## 📊 Dataset Focus
+Current schema supports deep tracing across:
+- **Sales**: Orders, Items, Customer Profiles.
+- **Logistics**: Deliveries, Shipping Plants, Picking statuses.
+- **Finance**: Billing Documents, Accounting Records, Payment status.
